@@ -5,22 +5,24 @@ import {
   Typography,
   IconButton,
   Stack,
+  Box,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDraggable } from "@dnd-kit/core";
 import { TaskContext } from "../context/TaskContext";
-import TaskForm from "./Form";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import TaskForm from "./TaskForm";
 
 const Task = ({ taskId, columnId }) => {
   const { columns, editTask, deleteTask } = useContext(TaskContext);
 
+  // Get current Column and Task
   const column = columns.find((col) => col.id === columnId);
   const task = column?.tasks.find((t) => t.id === taskId);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // Make the task draggable
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: taskId ? taskId.toString() : "",
   });
@@ -35,6 +37,7 @@ const Task = ({ taskId, columnId }) => {
       : undefined,
   };
 
+  // Save updated task details
   const handleSaveTask = (updatedTask) => {
     editTask(columnId, taskId, {
       name: updatedTask.taskName,
@@ -45,15 +48,18 @@ const Task = ({ taskId, columnId }) => {
     setIsEditDialogOpen(false);
   };
 
-  const handleDeleteTask = () => {
-    deleteTask(columnId, taskId);
+  const handleDeleteTask = () => deleteTask(columnId, taskId);
+
+  // Handle Iconbutton events and prevent propagation
+  const handleButtonEvents = (event) => {
+    event.stopPropagation();
   };
 
   return (
-    <div
-      ref={setNodeRef}
+    <Box
+      ref={setNodeRef} // Reference for draggable functionality
       style={style}
-      {...(isEditDialogOpen ? {} : listeners)}
+      {...(isEditDialogOpen ? {} : listeners)} // Disable drag listeners if dialog is open
       {...attributes}
     >
       <Card style={{ margin: "10px 0", backgroundColor: "#f9f9f9" }}>
@@ -66,27 +72,19 @@ const Task = ({ taskId, columnId }) => {
             <Typography variant="h5">{task.name || "Unnamed Task"}</Typography>
             <Stack direction="row" spacing={0}>
               <IconButton
-                data-testid="favorite-button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                size="small"
-              >
-                <FavoriteBorderIcon />
-              </IconButton>
-
-              <IconButton
                 data-testid="edit-button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={handleButtonEvents}
+                onPointerDown={handleButtonEvents}
                 onClick={() => setIsEditDialogOpen(true)}
                 size="small"
               >
                 <EditIcon />
               </IconButton>
+
               <IconButton
                 data-testid="delete-button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={handleButtonEvents}
+                onPointerDown={handleButtonEvents}
                 onClick={handleDeleteTask}
                 size="small"
               >
@@ -98,15 +96,20 @@ const Task = ({ taskId, columnId }) => {
           <Typography variant="body2">
             Description: {task.description || "No description provided"}
           </Typography>
+
           <Typography variant="body2">
             Assigned to: {task.assignedTo || "Unassigned"}
           </Typography>
+
           <Typography variant="body2">
-            Deadline: {new Date(task.deadline).toLocaleDateString()}
+            Deadline:
+            {task.deadline
+              ? new Date(task.deadline).toLocaleDateString()
+              : "No deadline"}
           </Typography>
         </CardContent>
 
-        {/* Use TaskForm for editing */}
+        {/* Edit task dialog */}
         <TaskForm
           open={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
@@ -120,7 +123,7 @@ const Task = ({ taskId, columnId }) => {
           isEditing
         />
       </Card>
-    </div>
+    </Box>
   );
 };
 

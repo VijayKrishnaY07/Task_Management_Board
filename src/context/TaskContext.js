@@ -4,13 +4,13 @@ import { getStoredData, storeData } from "../utils/localStorage";
 export const TaskContext = createContext();
 
 const TaskProvider = ({ children }) => {
-  const [columns, setColumns] = useState(() => getStoredData("columns") || []); //Get Columns from LocalStorage
+  const [columns, setColumns] = useState(() => getStoredData("columns"));
 
   useEffect(() => {
-    storeData("columns", columns); // Side effect to save every change to LocalStorage
+    storeData("columns", columns);
   }, [columns]);
 
-  /////////////////////////  Columns Opeartions ////////////////////////
+  ///////////////////////// Column Operations /////////////////////////
 
   const addColumn = (newColumn) => {
     setColumns([...columns, newColumn]);
@@ -34,50 +34,35 @@ const TaskProvider = ({ children }) => {
     setColumns(updatedColumns);
   };
 
-  ////////////////////////// Task Operations //////////////////////
+  ///////////////////////// Task Operations //////////////////////////
 
-  const addTask = (columnId, task) => {
-    const newTask = { ...task, id: Date.now().toString() };
+  // Helper function to update a task based on a callback
+  const updateColumnTasks = (columnId, taskUpdater) => {
     setColumns((prevColumns) =>
       prevColumns.map((column) =>
         column.id === columnId
-          ? { ...column, tasks: [...column.tasks, newTask] }
+          ? { ...column, tasks: taskUpdater(column.tasks) }
           : column
       )
     );
   };
 
+  const addTask = (columnId, task) => {
+    const newTask = { ...task, id: Date.now().toString() };
+    updateColumnTasks(columnId, (tasks) => [...tasks, newTask]);
+  };
+
   const editTask = (columnId, taskId, updatedTask) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((column) =>
-        column.id === columnId
-          ? {
-              ...column,
-              tasks: column.tasks.map((task) =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      ...updatedTask,
-                      assignedTo: updatedTask.assignedTo,
-                    }
-                  : task
-              ),
-            }
-          : column
+    updateColumnTasks(columnId, (tasks) =>
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, ...updatedTask } : task
       )
     );
   };
 
   const deleteTask = (columnId, taskId) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((column) =>
-        column.id === columnId
-          ? {
-              ...column,
-              tasks: column.tasks.filter((task) => task.id !== taskId),
-            }
-          : column
-      )
+    updateColumnTasks(columnId, (tasks) =>
+      tasks.filter((task) => task.id !== taskId)
     );
   };
 

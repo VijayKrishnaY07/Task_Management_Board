@@ -1,5 +1,7 @@
 import React, { useState, useContext } from "react";
 import Task from "./Task";
+import ColumnForm from "./ColumnForm";
+import TaskForm from "./TaskForm";
 import { TaskContext } from "../context/TaskContext";
 import {
   Card,
@@ -9,11 +11,6 @@ import {
   Button,
   Box,
   Stack,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,21 +19,27 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import TaskForm from "./Form";
 
 const Column = ({ columnId }) => {
   const { columns, editColumnName, deleteColumn, addTask } =
     useContext(TaskContext);
+
+  // Find the current column data using columnId
   const column = columns.find((col) => col.id === columnId);
 
-  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false);
-  const [newColumnName, setNewColumnName] = useState(column.name);
+  const tasks = column ? column.tasks : [];
 
+  // State for controlling task form dialog visibility
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+
+  // State for controlling column edit form dialog visibility
+  const [isEditColumnDialogOpen, setIsEditColumnDialogOpen] = useState(false);
+  // Enable droppable functionality for this column using DnD-kit
   const { setNodeRef } = useDroppable({
     id: columnId.toString(),
   });
 
+  // Handle the addition of a new task to the column
   const handleAddTask = (newTask) => {
     addTask(columnId, {
       name: newTask.taskName,
@@ -50,10 +53,10 @@ const Column = ({ columnId }) => {
   return (
     <Card
       sx={{
-        margin: "20px",
+        margin: "25px",
         backgroundColor: "#ddd",
-        minWidth: "300px",
-        maxHeight: "80vh",
+        minWidth: "40vh",
+        maxHeight: "100vh",
         overflow: "hidden",
       }}
     >
@@ -86,72 +89,42 @@ const Column = ({ columnId }) => {
         </Button>
 
         <Box
-          ref={setNodeRef}
+          ref={setNodeRef} // Reference for droppable area
           sx={{
             marginTop: "20px",
             overflowY: "auto",
-            height: "65vh",
+            height: "68vh",
             padding: "10px",
           }}
         >
-          <SortableContext
-            items={column.tasks}
-            strategy={verticalListSortingStrategy}
-          >
-            {column.tasks.map((task) => (
+          {/* Sortable context to allow task reordering */}
+          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+            {tasks.map((task) => (
               <Task key={task.id} taskId={task.id} columnId={columnId} />
             ))}
           </SortableContext>
         </Box>
 
+        {/* Task creation form dialog */}
         <TaskForm
           open={isTaskDialogOpen}
           onClose={() => setIsTaskDialogOpen(false)}
           onSubmit={handleAddTask}
-          initialValues={{
-            taskName: "",
-            assignedTo: "",
-            description: "",
-            deadline: null,
-          }}
+          initialValues={{}}
           isEditing={false}
         />
 
-        <Dialog
+        {/* Column edit form dialog */}
+        <ColumnForm
           open={isEditColumnDialogOpen}
           onClose={() => setIsEditColumnDialogOpen(false)}
-        >
-          <DialogTitle>Edit Column Name</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Column Name"
-              type="text"
-              fullWidth
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => setIsEditColumnDialogOpen(false)}
-              color="secondary"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                editColumnName(columnId, newColumnName.trim());
-                setIsEditColumnDialogOpen(false);
-              }}
-              color="primary"
-            >
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onSubmit={(newName) => {
+            editColumnName(columnId, newName.trim());
+            setIsEditColumnDialogOpen(false);
+          }}
+          initialName={column.name} // Pre-fill with existing column name
+          isEditing={true}
+        />
       </CardContent>
     </Card>
   );

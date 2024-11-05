@@ -20,6 +20,7 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
       .min(new Date(), "Deadline must be in the future"),
   });
 
+  // Initialize Formik for form handling
   const formik = useFormik({
     initialValues: {
       taskName: initialValues?.taskName || "",
@@ -27,11 +28,11 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
       description: initialValues?.description || "",
       deadline: initialValues?.deadline || null,
     },
-    enableReinitialize: true,
-    validationSchema,
+    enableReinitialize: true, // Reinitialize form values when props change
+    validationSchema, // Attach validation schema to the form
     onSubmit: (values, { resetForm }) => {
       onSubmit(values);
-      resetForm(); // Reset form values after submit
+      resetForm();
       onClose();
     },
   });
@@ -51,6 +52,7 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
             error={formik.touched.taskName && Boolean(formik.errors.taskName)}
             helperText={formik.touched.taskName && formik.errors.taskName}
           />
+
           <TextField
             fullWidth
             margin="dense"
@@ -63,6 +65,7 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
             }
             helperText={formik.touched.assignedTo && formik.errors.assignedTo}
           />
+
           <TextField
             fullWidth
             margin="dense"
@@ -73,12 +76,14 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
             multiline
             rows={4}
           />
+
           <DatePicker
             label="Deadline"
             value={formik.values.deadline}
             onChange={(date) => formik.setFieldValue("deadline", date)}
             renderInput={(params) => (
               <TextField
+                key={params.key}
                 {...params}
                 fullWidth
                 margin="dense"
@@ -90,6 +95,7 @@ const TaskForm = ({ open, onClose, onSubmit, initialValues, isEditing }) => {
             )}
           />
         </DialogContent>
+
         <DialogActions>
           <Button onClick={onClose} color="secondary">
             Cancel

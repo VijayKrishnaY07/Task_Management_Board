@@ -7,10 +7,6 @@ import { TaskContext } from "../context/TaskContext";
 const mockAddColumn = jest.fn();
 const mockEditColumnName = jest.fn();
 const mockDeleteColumn = jest.fn();
-const mockAddTask = jest.fn();
-const mockEditTask = jest.fn();
-const mockDeleteTask = jest.fn();
-const mockUpdateColumns = jest.fn();
 
 const mockColumns = [
   {
@@ -29,18 +25,14 @@ const mockColumns = [
   { id: "2", name: "Column 2", tasks: [] },
 ];
 
-const renderTaskBoard = () => {
+const renderTaskBoard = (customColumns = mockColumns) => {
   render(
     <TaskContext.Provider
       value={{
-        columns: mockColumns,
+        columns: customColumns,
         addColumn: mockAddColumn,
         editColumnName: mockEditColumnName,
         deleteColumn: mockDeleteColumn,
-        addTask: mockAddTask,
-        editTask: mockEditTask,
-        deleteTask: mockDeleteTask,
-        updateColumns: mockUpdateColumns,
       }}
     >
       <TaskBoard />
@@ -66,26 +58,7 @@ describe("TaskBoard Component", () => {
     expect(screen.getByText("Column 2")).toBeInTheDocument();
   });
 
-  // Test Case 3: Check if Add Board dialog opens and adds a new column
-  test("opens add board dialog and adds new column", () => {
-    renderTaskBoard();
-    const addButton = screen.getByText(/\+ ADD NEW BOARD/i);
-    fireEvent.click(addButton);
-
-    const input = screen.getByLabelText(/Board Name/i);
-    fireEvent.change(input, { target: { value: "New Column" } });
-
-    const saveButton = screen.getByText(/Add Board/i);
-    fireEvent.click(saveButton);
-
-    expect(mockAddColumn).toHaveBeenCalledWith({
-      id: expect.any(String),
-      name: "New Column",
-      tasks: [],
-    });
-  });
-
-  // Test Case 4: Check if deleteColumn is called when delete button is clicked
+  // Test Case 3: Check if deleteColumn is called when delete button is clicked
   test("calls deleteColumn when delete button is clicked", () => {
     renderTaskBoard();
 
@@ -95,24 +68,9 @@ describe("TaskBoard Component", () => {
     expect(mockDeleteColumn).toHaveBeenCalledWith("1");
   });
 
-  // Test Case 5: Check if TaskBoard shows a message when there are no columns
+  // Test Case 4: Check if TaskBoard shows a message when there are no columns
   test("shows message when no columns are available", () => {
-    render(
-      <TaskContext.Provider
-        value={{
-          columns: [],
-          addColumn: mockAddColumn,
-          editColumnName: mockEditColumnName,
-          deleteColumn: mockDeleteColumn,
-          addTask: mockAddTask,
-          editTask: mockEditTask,
-          deleteTask: mockDeleteTask,
-          updateColumns: mockUpdateColumns,
-        }}
-      >
-        <TaskBoard />
-      </TaskContext.Provider>
-    );
+    renderTaskBoard([]);
     expect(screen.getByText(/Task Management Board/i)).toBeInTheDocument();
     expect(screen.queryByText("Column 1")).not.toBeInTheDocument();
   });

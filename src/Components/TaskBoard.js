@@ -1,66 +1,55 @@
 import React, { useContext, useState } from "react";
 import Column from "./Column";
 import Task from "./Task";
+import ColumnForm from "./ColumnForm";
 import { TaskContext } from "../context/TaskContext";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-  Stack,
-} from "@mui/material";
+import { Button, Typography, Stack } from "@mui/material";
 import { DndContext, closestCorners, DragOverlay } from "@dnd-kit/core";
 
 const TaskBoard = () => {
   const { columns, addColumn, updateColumns } = useContext(TaskContext);
 
-  // Initialize state hooks
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newBoardName, setNewBoardName] = useState("");
-  const [activeTask, setActiveTask] = useState(null); // Track the active task for DragOverlay
+  // State for visibility of column creation form dialog and active dragged task
+  const [isColumnFormOpen, setIsColumnFormOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState(null);
 
-  const handleDialogOpen = () => {
-    setIsDialogOpen(true);
-  };
+  const handleOpenColumnForm = () => setIsColumnFormOpen(true);
+  const handleCloseColumnForm = () => setIsColumnFormOpen(false);
 
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setNewBoardName("");
-  };
-
-  const handleAddBoard = () => {
-    if (newBoardName.trim()) {
+  // Function to handle column creation when form is submitted
+  const handleAddColumnSubmit = (columnName) => {
+    if (columnName.trim()) {
       const newColumn = {
         id: Date.now().toString(),
-        name: newBoardName,
+        name: columnName,
         tasks: [],
       };
       addColumn(newColumn);
-      handleDialogClose();
+      handleCloseColumnForm();
     }
   };
 
+  // Function called when dragging starts, setting the active task for DragOverlay
   const handleDragStart = ({ active }) => {
     const columnWithActiveTask = columns.find((column) =>
       column.tasks.some((task) => task.id === active.id)
     );
+
     const task = columnWithActiveTask.tasks.find(
       (task) => task.id === active.id
     );
-    setActiveTask(task); // Set the active task for DragOverlay
+    setActiveTask(task); // Set the active task for use in DragOverlay
   };
 
   const handleDragEnd = ({ active, over }) => {
-    setActiveTask(null); // Clear the active task after dragging ends
+    setActiveTask(null); // Clear active task for DragOverlay after dragging ends
 
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeId = active.id; // ID of the task being dragged
+    const overId = over.id; // ID of the drop target
 
+    // Find the source and destination columns
     const sourceColumn = columns.find((col) =>
       col.tasks.some((task) => task.id === activeId)
     );
@@ -70,20 +59,27 @@ const TaskBoard = () => {
 
     if (!sourceColumn || !destinationColumn) return;
 
+    // Find the index of the dragged task in the source column
     const sourceTaskIndex = sourceColumn.tasks.findIndex(
       (task) => task.id === activeId
     );
+    // Remove the task from the source column
     const [movedTask] = sourceColumn.tasks.splice(sourceTaskIndex, 1);
 
+    // Check if the task is being moved within the same column
     if (sourceColumn.id === destinationColumn.id) {
+      // Get the index of the drop target task in the same column
       const destinationTaskIndex = destinationColumn.tasks.findIndex(
         (task) => task.id === overId
       );
+      // Insert the task at the new position within the same column
       destinationColumn.tasks.splice(destinationTaskIndex + 1, 0, movedTask);
     } else {
+      // If moved to a different column, add the task to the end of the destination column
       destinationColumn.tasks = [...destinationColumn.tasks, movedTask];
     }
 
+    // Update columns state with the new column/task structure
     updateColumns([...columns]);
   };
 
@@ -100,35 +96,21 @@ const TaskBoard = () => {
       <Button
         variant="contained"
         color="primary"
-        onClick={handleDialogOpen}
+        onClick={handleOpenColumnForm}
         sx={{ marginBottom: "20px", marginLeft: "50px" }}
       >
         + ADD NEW BOARD
       </Button>
 
-      <Dialog open={isDialogOpen} onClose={handleDialogClose}>
-        <DialogTitle>Add a New Board</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Board Name"
-            type="text"
-            fullWidth
-            value={newBoardName}
-            onChange={(e) => setNewBoardName(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="secondary">
-            Discard
-          </Button>
-          <Button variant="contained" onClick={handleAddBoard} color="primary">
-            Add Board
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ColumnForm
+        open={isColumnFormOpen}
+        onClose={handleCloseColumnForm}
+        onSubmit={handleAddColumnSubmit} // Create new column when form is submitted
+        initialName=""
+        isEditing={false}
+      />
 
+      {/* Display all columns in a horizontal row */}
       <Stack
         direction="row"
         spacing={7}

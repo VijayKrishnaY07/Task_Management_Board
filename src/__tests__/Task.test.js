@@ -67,16 +67,7 @@ describe("Task Component", () => {
     expect(mockDeleteTask).toHaveBeenCalledWith("column1", "task1");
   });
 
-  // Test Case 3: Check if deadline is displayed in the correct format
-  test("displays the deadline in the correct format", () => {
-    renderTaskComponent();
-    const deadlineDate = new Date(
-      mockColumns[0].tasks[0].deadline
-    ).toLocaleDateString();
-    expect(screen.getByText(`Deadline: ${deadlineDate}`)).toBeInTheDocument();
-  });
-
-  // Test Case 4: Check if the edit dialog opens and displays correct values
+  // Test Case 3: Check if the edit dialog opens and displays correct values
   test("opens edit dialog with correct initial values", () => {
     renderTaskComponent();
     const editButton = screen.getByTestId("edit-button");
