@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SortIcon from "@mui/icons-material/Sort";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -28,7 +29,7 @@ const Column = ({ columnId }) => {
   const column = columns.find((col) => col.id === columnId);
 
   const tasks = column ? column.tasks : [];
-
+  const [isAscending, setIsAscending] = useState(false);
   // State for controlling task form dialog visibility
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
 
@@ -50,6 +51,15 @@ const Column = ({ columnId }) => {
     setIsTaskDialogOpen(false);
   };
 
+  const toggleAscending = () => {
+    setIsAscending((preOder) => !preOder);
+  };
+
+  const SortTasks = tasks.slice().sort((a, b) => {
+    return isAscending
+      ? a.name.localeCompare(b.name)
+      : b.name.localeCompare(a.name);
+  });
   return (
     <Card
       sx={{
@@ -77,6 +87,9 @@ const Column = ({ columnId }) => {
             <IconButton onClick={() => deleteColumn(columnId)} size="small">
               <DeleteIcon />
             </IconButton>
+            <IconButton onClick={toggleAscending} size="small">
+              <SortIcon />
+            </IconButton>
           </Stack>
         </Stack>
 
@@ -98,8 +111,11 @@ const Column = ({ columnId }) => {
           }}
         >
           {/* Sortable context to allow task reordering */}
-          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
-            {tasks.map((task) => (
+          <SortableContext
+            items={SortTasks}
+            strategy={verticalListSortingStrategy}
+          >
+            {SortTasks.map((task) => (
               <Task key={task.id} taskId={task.id} columnId={columnId} />
             ))}
           </SortableContext>
